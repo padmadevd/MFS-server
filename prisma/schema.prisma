@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model app_users {
+  user_id          BigInt             @id @default(autoincrement())
+  first_name       String?
+  last_name        String?
+  email            String             @unique
+  mobile_no        String             @unique
+  date_of_birth    DateTime?          @db.Date
+  profile_image    String?
+  is_admin         Boolean            @default(false)
+  password_hash    String
+  password_salt    String
+  created_at       DateTime?          @db.Timestamp(6)
+  updated_at       DateTime?          @db.Timestamp(6)
+  cart_offer       cart_offer[]
+  cart_variant     cart_variant[]
+  purchase         purchase[]
+  user_address     user_address[]
+  user_coupon      user_coupon[]
+  wishlist_offer   wishlist_offer[]
+  wishlist_variant wishlist_variant[]
+}
+
+model cart_offer {
+  user_id   BigInt
+  offer_id  BigInt
+  quantity  BigInt
+  offer     offer     @relation(fields: [offer_id], references: [offer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cart_offer_offer_id_offer_offer_id")
+  app_users app_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cart_offer_user_id_app_users_user_id")
+
+  @@id([user_id, offer_id])
+}
+
+model cart_variant {
+  user_id         BigInt
+  variant_id      BigInt
+  quantity        BigInt
+  app_users       app_users       @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cart_variant_user_id_app_users_user_id")
+  product_variant product_variant @relation(fields: [variant_id], references: [variant_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cart_variant_variant_id_product_variant_variant_id")
+
+  @@id([user_id, variant_id])
+}
+
+model coupon {
+  coupon_code           String        @id
+  coupon_name           String?
+  coupon_description    String?
+  discount_type         String?
+  discount_value        Decimal?      @db.Decimal
+  minimum_profit_amount BigInt?
+  user_limit            BigInt?
+  created_at            DateTime?     @db.Timestamp(6)
+  updated_at            DateTime?     @db.Timestamp(6)
+  expires_at            DateTime?     @db.Timestamp(6)
+  purchase              purchase[]
+  user_coupon           user_coupon[]
+}
+
+model offer {
+  offer_id          BigInt           @id @default(autoincrement())
+  offer_name        String?
+  offer_description String?
+  discount_type     String?
+  discount_value    Decimal?         @db.Decimal
+  created_at        DateTime?        @db.Timestamp(6)
+  updated_at        DateTime?        @db.Timestamp(6)
+  expires_at        DateTime?        @db.Timestamp(6)
+  cart_offer        cart_offer[]
+  offer_image       offer_image[]
+  offer_product     offer_product[]
+  purchase_item     purchase_item[]
+  wishlist_offer    wishlist_offer[]
+}
+
+model offer_image {
+  offer_id      BigInt
+  image_url     String
+  display_order Int
+  offer         offer  @relation(fields: [offer_id], references: [offer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_offer_image_offer_id_offer_offer_id")
+
+  @@id([offer_id, image_url])
+}
+
+model offer_product {
+  offer_id   BigInt
+  product_id BigInt
+  quantity   BigInt
+  offer      offer   @relation(fields: [offer_id], references: [offer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_offer_product_offer_id_offer_offer_id")
+  product    product @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_offer_product_product_id_product_product_id")
+
+  @@id([offer_id, product_id])
+}
+
+model product {
+  product_id          BigInt            @id @default(autoincrement())
+  product_name        String
+  product_description String?
+  brand_name          String?
+  created_at          DateTime?         @db.Timestamp(6)
+  updated_at          DateTime?         @db.Timestamp(6)
+  offer_product       offer_product[]
+  product_image       product_image[]
+  product_tag         product_tag[]
+  product_variant     product_variant[]
+}
+
+model product_image {
+  product_id    BigInt
+  image_url     String
+  display_order Int
+  product       product @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_product_image_product_id_product_product_id")
+
+  @@id([product_id, image_url])
+}
+
+model product_tag {
+  product_id BigInt
+  tag_name   String
+  product    product @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_product_tag_product_id_product_product_id")
+
+  @@id([product_id, tag_name])
+}
+
+model product_variant {
+  variant_id       BigInt             @id @default(autoincrement())
+  product_id       BigInt
+  sku              String?            @unique
+  size_name        String?
+  unit_price       BigInt
+  stock_quantity   BigInt
+  created_at       DateTime?          @db.Timestamp(6)
+  updated_at       DateTime?          @db.Timestamp(6)
+  cart_variant     cart_variant[]
+  product          product            @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_product_variant_product_id_product_product_id")
+  purchase_item    purchase_item[]
+  wishlist_variant wishlist_variant[]
+}
+
+model purchase {
+  purchase_id            BigInt            @id @default(autoincrement())
+  user_id                BigInt
+  user_name              String?
+  mobile_no              String?
+  gross_amount           BigInt?
+  discount_amount        BigInt?
+  net_amount             BigInt?
+  coupon_code            String?
+  coupon_discount_amount BigInt?
+  payment_method         String?
+  created_at             DateTime?         @db.Timestamp(6)
+  updated_at             DateTime?         @db.Timestamp(6)
+  coupon                 coupon?           @relation(fields: [coupon_code], references: [coupon_code], onDelete: NoAction, onUpdate: NoAction, map: "fk_purchase_coupon_code_coupon_coupon_code")
+  app_users              app_users         @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_purchase_user_id_app_users_user_id")
+  purchase_address       purchase_address?
+  purchase_item          purchase_item[]
+}
+
+model purchase_address {
+  purchase_id    BigInt   @id
+  country_name   String?
+  state_name     String?
+  city_name      String?
+  address_line_1 String?
+  address_line_2 String?
+  purchase       purchase @relation(fields: [purchase_id], references: [purchase_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_purchase_address_purchase_id_purchase_purchase_id")
+}
+
+model purchase_item {
+  purchase_item_id BigInt           @id @default(autoincrement())
+  purchase_id      BigInt
+  variant_id       BigInt?
+  offer_id         BigInt?
+  quantity         BigInt
+  unit_price       BigInt
+  discount_amount  BigInt
+  line_total       BigInt
+  offer            offer?           @relation(fields: [offer_id], references: [offer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_purchase_item_offer_id_offer_offer_id")
+  purchase         purchase         @relation(fields: [purchase_id], references: [purchase_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_purchase_item_purchase_id_purchase_purchase_id")
+  product_variant  product_variant? @relation(fields: [variant_id], references: [variant_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_purchase_item_variant_id_product_variant_variant_id")
+}
+
+model user_address {
+  address_id     BigInt    @id @default(autoincrement())
+  user_id        BigInt
+  title          String
+  country_name   String?
+  state_name     String?
+  city_name      String?
+  address_line_1 String?
+  address_line_2 String?
+  app_users      app_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_address_user_id_app_users_user_id")
+}
+
+model user_coupon {
+  user_id     BigInt
+  coupon_code String
+  coupon      coupon    @relation(fields: [coupon_code], references: [coupon_code], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_coupon_coupon_code_coupon_coupon_code")
+  app_users   app_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_coupon_user_id_app_users_user_id")
+
+  @@id([user_id, coupon_code])
+}
+
+model wishlist_offer {
+  user_id   BigInt
+  offer_id  BigInt
+  offer     offer     @relation(fields: [offer_id], references: [offer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wishlist_offer_offer_id_offer_offer_id")
+  app_users app_users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wishlist_offer_user_id_app_users_user_id")
+
+  @@id([user_id, offer_id])
+}
+
+model wishlist_variant {
+  user_id         BigInt
+  variant_id      BigInt
+  app_users       app_users       @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wishlist_variant_user_id_app_users_user_id")
+  product_variant product_variant @relation(fields: [variant_id], references: [variant_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wishlist_variant_variant_id_product_variant_variant_id")
+
+  @@id([user_id, variant_id])
+}
